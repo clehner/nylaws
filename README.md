@@ -5,20 +5,32 @@ laws](http://public.leginfo.state.ny.us/MENUGETF.cgi?COMMONQUERY=LAWS).
 
 ## Usage
 
-`nylaws laws` - get list of law chapters
-`nylaws <law>` - get list of articles and titles
-`nylaws <law> article <article>` - get the heading of an article
-`nylaws <law> [article] <article> [title] <title>` -
-	get list of sections in a title
+`nylaws laws`
+get list of law chapters
+
+`nylaws <law>`
+get list of articles and titles
+
+`nylaws <law> article <article>`
+get the heading of an article
+
+`nylaws <law> [article] <article> [title] <title>`
+get list of sections in a title
+
 `nylaws <law> [section] <section>`
+get the text of a section
 
 ## Options
 
-`-h, --help`- Show help
-`--version` - Show version.
-`-v, --verbose` - Show debug info.
-`-n, --no-cache` - Ensure that the request is made live.
-`-a, --all` - Get full text instead of an overview list.
+`-h, --help` Show help
+
+`--version` Show version.
+
+`-v, --verbose` Show debug info.
+
+`-n, --no-cache` Ensure that the request is made live.
+
+`-a, --all` Get full text instead of an overview list.
 
 ## Examples
 
