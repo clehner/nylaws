@@ -17,6 +17,7 @@ mkdir -p $CACHE_DIR || $CACHE_DIR=`mktemp -d` ||
 
 req() {
     query="$1"
+    query="$(echo $query | tr '[A-Z]' '[a-z]')"
     cache_file="$CACHE_DIR/$query.html"
     if [[ -n $opt_verbose ]]; then
         echo query: "$query" >&2
