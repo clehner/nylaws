@@ -20,6 +20,10 @@ get list of sections in a title
 `nylaws <law> [section] <section>`
 get the text of a section
 
+`nylaws CNS [article] <article> [section] <section>`
+get the text of a section of the Constitution (the only law chapter here
+numbered by article-section instead of just section)
+
 ## Options
 
 `-h, --help` Show help
