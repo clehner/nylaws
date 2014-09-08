@@ -129,7 +129,7 @@ show_help() {
 nylaws. Access New York State laws.
 
 Usage:
-  nylaws laws
+  nylaws
   nylaws <law>
   nylaws <law> article <article>
   nylaws <law> [article] <article> [title] <title>
@@ -165,8 +165,7 @@ for arg; do
 done
 
 case "$1" in
-    '') show_help;;
-    laws) get_laws;;
+    ''|laws) get_laws;;
     *) case "$2" in
         '') get_law "$1";;
         article) case "$4" in

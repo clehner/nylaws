@@ -5,7 +5,7 @@ laws](http://public.leginfo.state.ny.us/MENUGETF.cgi?COMMONQUERY=LAWS).
 
 ## Usage
 
-`nylaws laws`
+`nylaws`
 get list of law chapters
 
 `nylaws <law>`
