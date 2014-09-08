@@ -1,8 +1,13 @@
 #/bin/sh
+# vi: ts=4 sw=4 et
 #
-# nylaws - Get the Laws of New York from the comfort of your terminal
+# nylaws(1)
+# Get the Laws of New York from the comfort of your terminal
+#
+# Copyright (c) 2014 Charles Lehner
+# Released under the terms of the MIT License.
 
-VERSION=1.0.0
+VERSION=1.1.0
 EX_USAGE=64
 CACHE_DIR=~/.cache/nylaws
 CGI_URL='http://public.leginfo.state.ny.us/LAWSSEAF.cgi?'
@@ -36,14 +41,16 @@ req_list() {
             /<b>/ s/<b> \?\(.*\)<\/b>/\n\1/p"
 }
 
+filter_text_commands='s/<[^>]*>//g; s/&nbsp;\?/ /g; s/&#167;/§/g'
+
 req_text() {
     req_query "$1" |\
-        sed -un '0,/PRE/d; /\/pre/q; /"brk"/n; s/&#167;/§/g; p' 
+        sed -un "0,/PRE/d; /\/pre/q; /\"brk\"/n; $filter_text_commands; p"
 }
 
 req_index() {
     req_query "$1" |\
-        sed -un '0,/id=container/d; /\/DIV/q; s/<[^>]*>//g; s/&nbsp;\?/ /g; p'
+        sed -un "0,/id=container/d; /\/DIV/q; $filter_text_commands; p"
 }
 
 # get list of laws
