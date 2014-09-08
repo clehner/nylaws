@@ -1,0 +1,185 @@
+#/bin/sh
+#
+# nylaws - Get the Laws of New York from the comfort of your terminal
+
+VERSION=1.0.0
+EX_USAGE=64
+CACHE_DIR=~/.cache/nylaws
+CGI_URL='http://public.leginfo.state.ny.us/LAWSSEAF.cgi?'
+
+mkdir -p $CACHE_DIR || $CACHE_DIR=`mktemp -d` ||
+    echo >2 'Unable to create cache directory'
+
+req() {
+    query="$1"
+    cache_file="$CACHE_DIR/$query.html"
+    if [[ -n $opt_verbose ]]; then
+        echo query: "$query" >&2
+    fi
+    if [[ -e "$cache_file" && -z $opt_no_cache ]]; then
+        cat "$cache_file"
+    else
+        url="$CGI_URL$query"
+        temp_file=$(mktemp)
+        curl -sN "$url" | tee "$temp_file"
+        mv "$temp_file" "$cache_file"
+    fi
+}
+
+req_query() {
+    req "QUERYDATA=$1"
+}
+
+req_list() {
+    req "LIST=$1" |\
+        sed -un "/getlaw/{n; N; s/<.*\r$//gm; s/\n/\t/g; p; };\
+            /<b>/ s/<b> \?\(.*\)<\/b>/\n\1/p"
+}
+
+req_text() {
+    req_query "$1" |\
+        sed -un '0,/PRE/d; /\/pre/q; /"brk"/n; s/&#167;/§/g; p' 
+}
+
+req_index() {
+    req_query "$1" |\
+        sed -un '0,/id=container/d; /\/DIV/q; s/<[^>]*>//g; s/&nbsp;\?/ /g; p'
+}
+
+# get list of laws
+get_laws() {
+    req_list MAIN
+}
+
+# get list of articles and titles
+get_law() {
+    law="$1"
+
+    if [[ -n "$opt_all" ]]; then
+        req_text "**$law"
+    else
+        req_index "@LL$1"
+    fi
+}
+
+get_section() {
+    law="$1"
+    section="$2"
+
+    if [[ -n $opt_verbose ]]; then
+        echo getting $law section $section
+    fi
+
+    req_text '$$'"$law$section"'$$'
+}
+
+get_article() {
+    law="$1"
+    article="$2"
+
+    if [[ -z "$article" ]]; then
+        echo "Missing article number" >&2
+        exit $EX_USAGE
+    fi
+
+    if [[ -n $opt_verbose ]]; then
+        echo getting $law article $article
+    fi
+
+    req_text "\$\$${law}A${article}\$\$"
+}
+
+get_title() {
+    law="$1"
+    article="$2"
+    title="$3"
+
+    if [[ -n $opt_verbose ]]; then
+        echo getting $law article $article title $title
+    fi
+
+    if [[ -z "$article" ]]; then
+        echo "Missing article number" >&2
+        exit $EX_USAGE
+    fi
+    if [[ -z "$title" ]]; then
+        echo "Missing title number" >&2
+        exit $EX_USAGE
+    fi
+
+    if [[ -n $opt_all ]]; then
+        echo get all $law $article $title
+        #req_text "**$law"
+    else
+        req_index "@SL${law}0A${article}T${title}"
+    fi
+}
+
+unknown_flag() {
+    echo "Unhandled flag $1" >&2
+    exit $EX_USAGE
+}
+
+show_version() {
+    echo nylaws $VERSION
+}
+
+show_help() {
+    cat << EOF
+nylaws. Access New York State laws.
+
+Usage:
+  nylaws laws
+  nylaws <law>
+  nylaws <law> article <article>
+  nylaws <law> [article] <article> [title] <title>
+  nylaws <law> [section] <section>
+
+Options:
+  -h --help     Show this screen.
+  --version     Show version.
+  -v --verbose  Show debug info.
+  -a --all      Get all - the full text.
+  -n --no-cache Request the data even if requested it previously
+
+EOF
+}
+
+opt_all=
+opt_no_cache=
+
+i=0
+for arg; do
+    ((i++))
+    case "$arg" in
+        -h|--help) show_help; exit;;
+        -a|--all) opt_all=1;;
+        -n|--no-cache) opt_no_cache=1;;
+        -v|--verbose) opt_verbose=1;;
+        --version) show_version; exit;;
+        -*) unknown_flag "$arg";;
+        *) continue;;
+    esac
+    # remove the flag from the args list
+    set -- "${@:1:i-1}" "${@:i+1}"
+done
+
+case "$1" in
+    '') show_help;;
+    laws) get_laws;;
+    *) case "$2" in
+        '') get_law "$1";;
+        article) case "$4" in
+            '') get_article "$1" "$3";;
+            title) get_title "$1" "$3" "$5";;
+            *) get_title "$1" "$3" "$4";;
+        esac;;
+        title) get_title "$1" "$3" "$4";;
+        section) get_section "$1" "$3";;
+        *) case "$3" in
+            title) get_title "$1" "$2" "$4";;
+            '') get_section "$1" "$2";;
+            *) get_title "$1" "$2" "$3";;
+        esac
+    esac
+esac
